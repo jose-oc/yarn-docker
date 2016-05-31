@@ -20,6 +20,10 @@ echo
 N=${1:-2}
 CUR_DIR="$PWD"
 
+DOCKER_SOCKET_FILE_MAPPING="/var/run/docker.sock:/var/run/docker.sock"
+DOCKER_LOCAL_TMP_MAPPING="/tmp/hadoop-root/nm-local-dir:/tmp/hadoop-root/nm-local-dir"
+DOCKER_LOGS_MAPPING="/usr/local/hadoop/logs/userlogs:/usr/local/hadoop/logs/userlogs"
+
 docker stop resolvable master
 docker rm -f resolvable master
 
@@ -36,12 +40,20 @@ echo
 echo -e "\e[36mRunning containers... \e[0m"
 echo
 docker run -d --name resolvable --hostname resolvable -v /var/run/docker.sock:/tmp/docker.sock -v /etc/resolv.conf:/tmp/resolv.conf mgood/resolvable
-docker run -d --name master -h master -e "SLAVES=$N"  joseoc/yarn
+docker run -d --name master -h master -e "SLAVES=$N" \
+  -v $DOCKER_SOCKET_FILE_MAPPING \
+  -v $DOCKER_LOCAL_TMP_MAPPING \
+  -v $DOCKER_LOGS_MAPPING \
+ joseoc/yarn
 
 START=1
 for (( c=$START; c<=$N; c++)) 
 do
-   docker run -d --link master:master --name slave$c -h slave$c joseoc/yarn
+   docker run -d --link master:master --name slave$c -h slave$c \
+  -v $DOCKER_SOCKET_FILE_MAPPING \
+  -v $DOCKER_LOCAL_TMP_MAPPING \
+  -v $DOCKER_LOGS_MAPPING \
+   joseoc/yarn
 done
 
 echo -e "\e[92mDone \e[0m"

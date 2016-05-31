@@ -6,7 +6,11 @@ ENV HADOOP_HOME=/usr/local/hadoop
 
 RUN echo "http://dl-4.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories \
     && apk add --update \
-    curl openjdk8 openssh ruby bash cracklib-words supervisor procps \
+    	curl openjdk8 openssh ruby bash cracklib-words supervisor procps \
+    && apk add --no-cache \ 
+    	--repository http://dl-cdn.alpinelinux.org/alpine/edge/main \
+    	--repository  http://dl-cdn.alpinelinux.org/alpine/edge/community \
+    	vim docker docker-bash-completion docker-vim \
     && rm /var/cache/apk/*
 
 RUN curl "http://mirrors.ukfast.co.uk/sites/ftp.apache.org/hadoop/common/hadoop-$HADOOP_VERSION/hadoop-$HADOOP_VERSION.tar.gz" | tar -C /usr/local/ -xz | ln -s /usr/local/hadoop-$HADOOP_VERSION/ /usr/local/hadoop && rm -Rf /usr/local/hadoop/share/doc/
@@ -18,6 +22,7 @@ ADD core-site.xml /usr/local/hadoop/etc/hadoop/core-site.xml
 ADD hdfs-site.xml /usr/local/hadoop/etc/hadoop/hdfs-site.xml
 ADD mapred-site.xml /usr/local/hadoop/etc/hadoop/mapred-site.xml
 ADD yarn-site.xml /usr/local/hadoop/etc/hadoop/yarn-site.xml
+COPY container-executor.cfg /usr/local/hadoop/bin/
 ADD start-wrapper.sh /usr/local/hadoop/sbin/start-wrapper.sh
 
 USER root
@@ -37,6 +42,13 @@ ENV PATH ${JAVA_HOME}/bin:${HADOOP_HOME}/bin:${HADOOP_HOME}/sbin:${PATH}
 
 RUN sed -i -e 's/JAVA=\$JAVA_HOME\/bin\/java/JAVA=\/usr\/lib\/jvm\/default-jvm\/bin\/java/' /usr/local/hadoop/etc/hadoop/yarn-env.sh
 RUN sed -i -e 's/export JAVA_HOME=${JAVA_HOME}/export JAVA_HOME=\/usr\/lib\/jvm\/default-jvm\//' /usr/local/hadoop/etc/hadoop/hadoop-env.sh
+
+# File permissions for hadoop
+# must be owned by the configured NodeManager user (yarn) and group (hadoop). The permission set on these directories must be drwxr-xr-x
+RUN addgroup hadoop && adduser -D yarn && addgroup yarn hadoop
+RUN chmod 6050 /usr/local/hadoop/bin/container-executor && chown root:root /usr/local/hadoop/bin/container-executor
+# RUN chmod 755 /tmp/hadoop-root/nm-local-dir && chown yarn:hadoop /tmp/hadoop-root/nm-local-dir
+# RUN chmod 755 /usr/local/hadoop/logs/userlogs && chown yarn:hadoop /usr/local/hadoop/logs/userlogs
 
 RUN /bin/bash -l -c "hdfs namenode -format"
 
