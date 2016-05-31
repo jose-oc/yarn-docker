@@ -1,7 +1,8 @@
-FROM alpine:3.3 
+FROM alpine
 MAINTAINER gustavonalle
 
 ENV HADOOP_VERSION 2.7.2
+ENV HADOOP_HOME=/usr/local/hadoop
 
 RUN echo "http://dl-4.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories \
     && apk add --update \
@@ -10,7 +11,7 @@ RUN echo "http://dl-4.alpinelinux.org/alpine/edge/community" >> /etc/apk/reposit
 
 RUN curl "http://mirrors.ukfast.co.uk/sites/ftp.apache.org/hadoop/common/hadoop-$HADOOP_VERSION/hadoop-$HADOOP_VERSION.tar.gz" | tar -C /usr/local/ -xz | ln -s /usr/local/hadoop-$HADOOP_VERSION/ /usr/local/hadoop && rm -Rf /usr/local/hadoop/share/doc/
 
-ADD hadoop_home.sh /etc/profile.d/hadoop_home.sh
+ADD env_variables.sh /etc/profile.d/
 
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 ADD core-site.xml /usr/local/hadoop/etc/hadoop/core-site.xml
@@ -29,8 +30,10 @@ ADD ssh_config /root/.ssh/config
 RUN chmod 600 /root/.ssh/config
 RUN chown root:root /root/.ssh/config
 
+COPY bashrc /root/.bashrc
+
 ENV JAVA_HOME /usr/lib/jvm/default-jvm
-ENV PATH ${JAVA_HOME}/bin:${PATH}
+ENV PATH ${JAVA_HOME}/bin:${HADOOP_HOME}/bin:${HADOOP_HOME}/sbin:${PATH}
 
 RUN sed -i -e 's/JAVA=\$JAVA_HOME\/bin\/java/JAVA=\/usr\/lib\/jvm\/default-jvm\/bin\/java/' /usr/local/hadoop/etc/hadoop/yarn-env.sh
 RUN sed -i -e 's/export JAVA_HOME=${JAVA_HOME}/export JAVA_HOME=\/usr\/lib\/jvm\/default-jvm\//' /usr/local/hadoop/etc/hadoop/hadoop-env.sh
