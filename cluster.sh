@@ -74,3 +74,5 @@ echo -e "\e[92mCluster started \e[0m"
 echo -e "\e[92mHDFS UI on http://master:50070/dfshealth.html#tab-datanode \e[0m"
 echo -e "\e[92mYARN UI on http://master:8088/cluster/nodes \e[0m"
 echo
+echo -e "\e[92mTo get into the containers execute: 'docker exec -ti master bash' where master could be 'master', 'slave1', 'slave2' \e[0m"
+echo

@@ -2,7 +2,7 @@ FROM alpine
 MAINTAINER gustavonalle
 
 ENV HADOOP_VERSION 2.7.2
-ENV HADOOP_HOME=/usr/local/hadoop
+ENV HADOOP_HOME=/usr/local/hadoop-2.7.2
 
 RUN echo "http://dl-4.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories \
     && apk add --update \
@@ -46,7 +46,10 @@ RUN sed -i -e 's/export JAVA_HOME=${JAVA_HOME}/export JAVA_HOME=\/usr\/lib\/jvm\
 # File permissions for hadoop
 # must be owned by the configured NodeManager user (yarn) and group (hadoop). The permission set on these directories must be drwxr-xr-x
 RUN addgroup hadoop && adduser -D yarn && addgroup yarn hadoop
-RUN chmod 6050 /usr/local/hadoop/bin/container-executor && chown root:root /usr/local/hadoop/bin/container-executor
+RUN chown root:root /usr/local/hadoop-2.7.2 -R
+RUN chown root:hadoop /usr/local/hadoop-2.7.2/bin/container-executor
+RUN chmod 6050 /usr/local/hadoop-2.7.2/bin/container-executor 
+RUN chmod 755 /usr/local/hadoop-2.7.2/bin/container-executor.cfg
 # RUN chmod 755 /tmp/hadoop-root/nm-local-dir && chown yarn:hadoop /tmp/hadoop-root/nm-local-dir
 # RUN chmod 755 /usr/local/hadoop/logs/userlogs && chown yarn:hadoop /usr/local/hadoop/logs/userlogs
 
